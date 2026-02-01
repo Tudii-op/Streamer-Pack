@@ -6,7 +6,7 @@ export default function Content() {
   
   // Now you know which tab is active
   return (
-    <div className="h-2/3 bg-neutral-900 p-4 overflow-hidden">
+    <div className="h-2/3 bg-neutral-900 p-4 overflow-hidden text-white">
       Content for: {selectedTab}
     </div>
   )

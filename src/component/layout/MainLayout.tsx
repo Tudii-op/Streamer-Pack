@@ -1,6 +1,6 @@
 // Layout.tsx
 import { useState, createContext, useContext } from 'react'
-import SideBar from '../body/SideBar'
+import SideBar from './SideBar'
 
 interface LayoutContextType {
   selectedTab: string

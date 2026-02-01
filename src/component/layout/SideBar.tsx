@@ -1,5 +1,5 @@
 // SideBar.tsx
-import { useLayout } from '../layout/MainLayout'
+import { useLayout } from './MainLayout'
 
 export default function SideBar() {
   const { selectedTab, setSelectedTab } = useLayout()
