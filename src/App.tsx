@@ -1,13 +1,34 @@
-// App.tsx
-import Content from "./component/body/Content"
-import Container from "./component/body/Container"
-import Layout from "./component/layout/MainLayout"
+import { useEffect, useState } from 'react';
+import { loadModules } from './modules-loader';
 
+// Define module interface
+export interface Module {
+  name: string;
+  start: () => Promise<void> | void;
+  stop: () => void;
+}
+
+// Make state type-safe
 export default function App() {
+  const [modules, setModules] = useState<Module[]>([]);
+
+  useEffect(() => {
+    loadModules().then((loadedModules) => {
+      // Type assertion if loader returns unknown
+      setModules(loadedModules as Module[]);
+    });
+  }, []);
+
   return (
-    <Layout>
-      <Content />
-      <Container />
-    </Layout>
-  )
+    <div>
+      <h1>Modular Engine MVP</h1>
+      {modules.map((mod) => (
+        <div key={mod.name}>
+          <h3>{mod.name}</h3>
+          <button onClick={() => mod.start()}>Start</button>
+          <button onClick={() => mod.stop()}>Stop</button>
+        </div>
+      ))}
+    </div>
+  );
 }

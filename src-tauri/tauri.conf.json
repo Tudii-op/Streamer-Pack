@@ -12,11 +12,14 @@
   "app": {
     "windows": [
       {
-        "title": "tauri-app",
-        "width": 800,
-        "height": 600
+        "title": "Modular Engine",
+        "width": 1200,
+        "height": 800
       }
     ],
+    "allowlist": {
+      "all": true
+    },
     "security": {
       "csp": null
     }
