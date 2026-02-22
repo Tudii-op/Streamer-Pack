@@ -1,5 +1,0 @@
-{
-  "name": "video_capture",
-  "version": "1.0.0",
-  "permissions": ["screen"]
-}

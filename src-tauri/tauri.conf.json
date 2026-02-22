@@ -1,28 +1,24 @@
 {
-  "$schema": "https://schema.tauri.app/config/2",
-  "productName": "tauri-app",
+  "productName": "Streamer Pack",
+  "identifier": "com.tudii.brokenpixels",
   "version": "0.1.0",
-  "identifier": "com.tudii.tauri-app",
   "build": {
     "beforeDevCommand": "npm run dev",
-    "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:1420",
     "frontendDist": "../dist"
   },
   "app": {
+    "security": {
+      "csp": null
+    },
     "windows": [
       {
-        "title": "Modular Engine",
+        "title": "Streamer Pack v1",
         "width": 1200,
         "height": 800
       }
-    ],
-    "allowlist": {
-      "all": true
-    },
-    "security": {
-      "csp": null
-    }
+    ]
   },
   "bundle": {
     "active": true,
