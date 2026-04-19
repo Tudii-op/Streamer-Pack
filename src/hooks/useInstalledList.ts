@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { InstalledPackage } from "../types/maintypes";
+import { addLog } from "../debugLogger";
 
 export function useInstalled() {
   const [installed, setInstalled] = useState<InstalledPackage[]>([]);
@@ -8,9 +9,16 @@ export function useInstalled() {
 
   const fetchInstalled = () => {
     setLoading(true);
+    addLog("Fetching installed packages...");
 
     invoke<InstalledPackage[]>("list_installed_packages")
-      .then(setInstalled)
+      .then((data) => {
+        setInstalled(data);
+        addLog(`Loaded ${data.length} installed packages`);
+      })
+      .catch((err) => {
+        addLog("Failed to fetch installed: " + String(err));
+      })
       .finally(() => setLoading(false));
   };
 

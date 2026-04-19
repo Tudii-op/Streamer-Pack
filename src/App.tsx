@@ -1,15 +1,21 @@
 import SideBar from "./component/layout/SideBar";
 import { Window } from "./component/body/Window";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useInstalled } from "./hooks/useInstalledList";
 import DebugPanel from "./component/debug/debugPanel";
 import { usePackages } from "./hooks/usePackage";
+import { getLogs, subscribeLogs } from "./debugLogger";
 
 export default function App() {
   const [browse, setBrowse] = useState(false);
   const [choosenPackage, setChoosenPackage] = useState<string | null>(null);
+  const [debugLogs, setDebugLogs] = useState<string[]>(getLogs());
   const installedState = useInstalled();
-  const { debugLogs } = usePackages(browse);
+  usePackages(browse);
+
+  useEffect(() => {
+    return subscribeLogs(setDebugLogs);
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-zinc-950 text-zinc-100 p-3 gap-3">

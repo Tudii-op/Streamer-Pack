@@ -1,3 +1,5 @@
+//! Main entry point for the Streamer Pack Tauri application.
+
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod plugin_manager;

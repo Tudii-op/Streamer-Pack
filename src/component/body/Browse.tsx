@@ -1,15 +1,15 @@
 import type { Package } from "../../types/maintypes";
 import { usePackageInstaller } from "./../../hooks/usePackageInstaller";
+import { addLog } from "../../debugLogger";
 
 type Props = {
   packages: Package[];
   loading: boolean;
+  onChoose: (id: string | null) => void;
 };
 
-export default function Browse({ packages, loading }: Props) {
-  const { installPackage } = usePackageInstaller((msg) => {
-    console.log(msg); // Or send this to a debug panel
-  });
+export default function Browse({ packages, loading, onChoose }: Props) {
+  const { installPackage } = usePackageInstaller(addLog);
 
   return (
     <div className="space-y-4 p-4">
@@ -22,6 +22,7 @@ export default function Browse({ packages, loading }: Props) {
           <div
             key={pkg.id}
             className="w-full text-left p-4 border border-zinc-800 rounded-lg hover:bg-zinc-800 transition cursor-pointer flex flex-col gap-2"
+            onClick={() => onChoose(pkg.id)}
           >
             <div
               className="flex justify-between items-center"
@@ -29,7 +30,7 @@ export default function Browse({ packages, loading }: Props) {
               <div className="font-semibold text-cyan-300 text-lg">{pkg.name}</div>
               <button
                 onClick={(e) => {
-                  e.stopPropagation(); // prevent triggering onChoose
+                  e.stopPropagation();
                   installPackage(pkg.downloadUrl);
                 }}
                 className="px-3 py-1 bg-cyan-500 hover:bg-cyan-600 text-black font-semibold rounded transition"

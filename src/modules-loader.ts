@@ -1,5 +1,6 @@
 import React from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { addLog } from "./debugLogger";
 
 export type LoadedModule = {
   name: string;
@@ -9,7 +10,8 @@ export type LoadedModule = {
 export async function loadModules(): Promise<LoadedModule[]> {
   const modules: LoadedModule[] = [];
 
-  // 1️⃣ Load local dev modules
+  addLog("Loading modules...");
+
   const files = import.meta.glob("../modules/*/index.tsx");
   for (const path in files) {
     const mod: any = await files[path]();
@@ -20,13 +22,12 @@ export async function loadModules(): Promise<LoadedModule[]> {
     });
   }
 
-  // 2️⃣ Load AppData-installed modules
+  addLog(`Loaded ${Object.keys(files).length} local modules`);
+
   const installedPaths: string[] = await invoke("list_installed_modules");
+  addLog(`Found ${installedPaths.length} installed modules`);
 
   for (const path of installedPaths) {
-    // Dynamically import using relative path trick:
-    // Copy AppData modules to a temporary known folder in your project, e.g., src/instances/
-    // For demo, assume you copy them after install, otherwise cannot import .tsx directly
     try {
       const mod: any = await import(`../instances/${path.split("/").pop()}/index.tsx`);
       modules.push({
@@ -34,9 +35,10 @@ export async function loadModules(): Promise<LoadedModule[]> {
         Component: mod.default,
       });
     } catch {
-      console.warn(`Failed to load module at ${path}`);
+      addLog(`Failed to load module at ${path}`);
     }
   }
 
+  addLog(`Total modules loaded: ${modules.length}`);
   return modules;
 }

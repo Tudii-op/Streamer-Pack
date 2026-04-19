@@ -1,8 +1,12 @@
+//! Plugin manager for package operations.
+//! Handles listing, fetching, and installing packages from remote servers.
+
 use serde::{Deserialize, Serialize};
 use std::fs::{self, File};
 use std::io::copy;
 use std::path::{Path, PathBuf};
 
+/// Package information from the remote server.
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Package {
@@ -12,11 +16,13 @@ pub struct Package {
     pub download_url: String,
 }
 
+/// Installed package information.
 #[derive(Serialize)]
 pub struct InstalledPackage {
     pub name: String,
 }
 
+/// Extracts the package name from a download URL.
 fn extract_name_from_url(url: &str) -> String {
     url.split('/')
         .last()
@@ -24,19 +30,21 @@ fn extract_name_from_url(url: &str) -> String {
         .replace(".zip", "")
 }
 
+/// Fetches available packages from the remote API.
 #[tauri::command]
 pub async fn get_packages() -> Result<Vec<Package>, String> {
     let resp = reqwest::get("http://127.0.0.1:3000/api/packages")
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| format!("Failed to fetch packages: {}", e))?;
 
     let packages: Vec<Package> = resp.json()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| format!("Failed to parse package response: {}", e))?;
 
     Ok(packages)
 }
 
+/// Lists all installed packages in the ./installed directory.
 #[tauri::command]
 pub fn list_installed_packages() -> Result<Vec<InstalledPackage>, String> {
     let path = Path::new("./installed");
@@ -46,7 +54,7 @@ pub fn list_installed_packages() -> Result<Vec<InstalledPackage>, String> {
     }
 
     let packages = fs::read_dir(path)
-        .map_err(|e| e.to_string())?
+        .map_err(|e| format!("Failed to read installed directory: {}", e))?
         .filter_map(|e| e.ok())
         .filter_map(|e| e.file_name().into_string().ok())
         .map(|name| InstalledPackage { name })
@@ -55,6 +63,7 @@ pub fn list_installed_packages() -> Result<Vec<InstalledPackage>, String> {
     Ok(packages)
 }
 
+/// Downloads and installs a package from the given URL.
 #[tauri::command]
 pub fn install_package(url: String) -> Result<String, String> {
     let base_dir = Path::new("./installed");
@@ -62,29 +71,41 @@ pub fn install_package(url: String) -> Result<String, String> {
     let zip_path = base_dir.join(format!("{package_name}.zip"));
     let install_dir = base_dir.join(&package_name);
 
-    fs::create_dir_all(base_dir).map_err(|e| e.to_string())?;
+    fs::create_dir_all(base_dir)
+        .map_err(|e| format!("Failed to create install directory: {}", e))?;
 
-    let mut resp = reqwest::blocking::get(&url).map_err(|e| e.to_string())?;
-    let mut out = File::create(&zip_path).map_err(|e| e.to_string())?;
-    copy(&mut resp, &mut out).map_err(|e| e.to_string())?;
+    let mut resp = reqwest::blocking::get(&url)
+        .map_err(|e| format!("Failed to download package: {}", e))?;
+    let mut out = File::create(&zip_path)
+        .map_err(|e| format!("Failed to create zip file: {}", e))?;
+    copy(&mut resp, &mut out)
+        .map_err(|e| format!("Failed to write zip file: {}", e))?;
 
-    let zip_file = File::open(&zip_path).map_err(|e| e.to_string())?;
-    let mut archive = zip::ZipArchive::new(zip_file).map_err(|e| e.to_string())?;
+    let zip_file = File::open(&zip_path)
+        .map_err(|e| format!("Failed to open zip file: {}", e))?;
+    let mut archive = zip::ZipArchive::new(zip_file)
+        .map_err(|e| format!("Failed to read zip archive: {}", e))?;
 
-    fs::create_dir_all(&install_dir).map_err(|e| e.to_string())?;
+    fs::create_dir_all(&install_dir)
+        .map_err(|e| format!("Failed to create package directory: {}", e))?;
 
     for i in 0..archive.len() {
-        let mut file = archive.by_index(i).map_err(|e| e.to_string())?;
+        let mut file = archive.by_index(i)
+            .map_err(|e| format!("Failed to read zip entry {}: {}", i, e))?;
         let outpath: PathBuf = install_dir.join(file.mangled_name());
 
         if file.name().ends_with('/') {
-            fs::create_dir_all(&outpath).map_err(|e| e.to_string())?;
+            fs::create_dir_all(&outpath)
+                .map_err(|e| format!("Failed to create directory: {}", e))?;
         } else {
             if let Some(parent) = outpath.parent() {
-                fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+                fs::create_dir_all(parent)
+                    .map_err(|e| format!("Failed to create parent directory: {}", e))?;
             }
-            let mut outfile = File::create(&outpath).map_err(|e| e.to_string())?;
-            copy(&mut file, &mut outfile).map_err(|e| e.to_string())?;
+            let mut outfile = File::create(&outpath)
+                .map_err(|e| format!("Failed to create file: {}", e))?;
+            copy(&mut file, &mut outfile)
+                .map_err(|e| format!("Failed to write extracted file: {}", e))?;
         }
     }
 
