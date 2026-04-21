@@ -116,3 +116,16 @@ pub fn install_package(url: String) -> Result<String, String> {
 
     Ok(format!("Installed {}", package_name))
 }
+
+
+#[tauri::command]
+pub fn uninstall_package(name: String) -> Result<String, String> {
+    let path = Path::new("./installed").join(name);
+    if path.exists() {
+        fs::remove_dir_all(&path)
+            .map_err(|e| format!("Failed to uninstall package: {}", e))?;
+        Ok("Package uninstalled".to_string())
+    } else {
+        Err("Package not found".to_string())
+    }
+}

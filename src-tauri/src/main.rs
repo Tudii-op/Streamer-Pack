@@ -8,6 +8,7 @@ use plugin_manager::{
     get_packages,
     install_package,
     list_installed_packages,
+    uninstall_package,
 };
 
 fn main() {
@@ -15,7 +16,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             get_packages,
             install_package,
-            list_installed_packages
+            list_installed_packages,
+            uninstall_package
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri app");
