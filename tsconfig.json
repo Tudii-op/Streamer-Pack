@@ -20,6 +20,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "../modules"],
+  "include": ["src", "../modules", "src/component/body/Browse.tsx"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

@@ -3,12 +3,11 @@ import { invoke } from "@tauri-apps/api/core";
 import type { Package } from "../types/maintypes";
 import { addLog, getLogs } from "../debugLogger";
 
-export function usePackages(browse: boolean) {
+export function usePackages() {
   const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!browse) return;
 
     setLoading(true);
     addLog("Fetching packages via Tauri...");
@@ -24,7 +23,7 @@ export function usePackages(browse: boolean) {
       .finally(() => {
         setLoading(false);
       });
-  }, [browse]);
+  }, []);
 
   return { packages, loading, debugLogs: getLogs() };
 }

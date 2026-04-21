@@ -33,9 +33,12 @@ fn extract_name_from_url(url: &str) -> String {
 /// Fetches available packages from the remote API.
 #[tauri::command]
 pub async fn get_packages() -> Result<Vec<Package>, String> {
-    let resp = reqwest::get("http://127.0.0.1:3000/api/packages")
+    let base_url = std::env::var("API_URL")
+    .unwrap_or("http://127.0.0.1:3000".to_string());
+    let url: String = format!("{}/api/packages", base_url);
+    let resp: reqwest::Response = reqwest::get(url)
         .await
-        .map_err(|e| format!("Failed to fetch packages: {}", e))?;
+        .map_err(|e: reqwest::Error | format!("Failed to fetch packages: {}", e))?;
 
     let packages: Vec<Package> = resp.json()
         .await

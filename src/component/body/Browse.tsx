@@ -1,16 +1,11 @@
-import type { Package } from "../../types/maintypes";
-import { usePackageInstaller } from "./../../hooks/usePackageInstaller";
+import { usePackageInstaller } from "../../hooks/usePackageInstaller";
 import { addLog } from "../../debugLogger";
+import { usePackages } from "../../hooks/usePackage";
 
-type Props = {
-  packages: Package[];
-  loading: boolean;
-  onChoose: (id: string | null) => void;
-};
 
-export default function Browse({ packages, loading, onChoose }: Props) {
+export default function Browse() {
   const { installPackage } = usePackageInstaller(addLog);
-
+  const { packages: availablePackages, loading } = usePackages();
   return (
     <div className="space-y-4 p-4">
       <div className="text-2xl font-bold text-cyan-400 mb-2">Browse</div>
@@ -18,11 +13,10 @@ export default function Browse({ packages, loading, onChoose }: Props) {
       {loading && <div className="text-zinc-400">Loading packages...</div>}
 
       {!loading &&
-        packages.map((pkg) => (
+        availablePackages.map((pkg) => (
           <div
             key={pkg.id}
             className="w-full text-left p-4 border border-zinc-800 rounded-lg hover:bg-zinc-800 transition cursor-pointer flex flex-col gap-2"
-            onClick={() => onChoose(pkg.id)}
           >
             <div
               className="flex justify-between items-center"

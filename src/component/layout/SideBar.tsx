@@ -40,7 +40,9 @@ export default function SideBar({
         {installed.map((pkg) => (
           <div
             key={pkg.name}
-            onClick={() => setChoosenPackage(pkg.name)}
+            onClick={() => {setChoosenPackage(pkg.name);
+                setBrowse(false);}
+            }
             className="p-2 border border-zinc-800 rounded mb-2 hover:bg-zinc-800 cursor-pointer"
           >
             {pkg.name}
