@@ -1,16 +1,38 @@
-
 type Props = {
-  setChoosenPackage: (id: string) => void;
+  fetchPlugin: (pkg: string) => Promise<void>;
+  packages: string[];
+  activePlugin: string | null;
 };
 
-export default function SideBar({
-  setChoosenPackage,
-}: Props) {
-
+export default function SideBar({ fetchPlugin, packages, activePlugin }: Props) {
   return (
-    <div className="w-64 border border-zinc-800 rounded-lg p-4 bg-zinc-900">
-      <button onClick={() => setChoosenPackage("video")} >Video Capure</button>
-      <button onClick={() => setChoosenPackage("audio")} >Audio Capure</button>
+    <div className="w-56 shrink-0 border-r border-zinc-900 bg-[#0d0d0d] flex flex-col">
+      
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-zinc-900">
+        <span className="text-[10px] tracking-widest text-cyan-300 uppercase">Packages</span>
+      </div>
+
+      {/* Package list */}
+      <ul className="flex-1 overflow-y-auto py-2">
+        {packages.length === 0 && (
+          <li className="px-4 py-3 text-xs text-cyan-300">No packages installed</li>
+        )}
+        {packages.map((pkg) => (
+          <li key={pkg}>
+            <button
+              onClick={() => fetchPlugin(pkg)}
+              className={`w-full text-left px-4 py-2.5 text-xs tracking-wide transition-colors
+                ${activePlugin === pkg
+                  ? "bg-zinc-800 text-white border-l-2 border-blue-500"
+                  : "text-cyan-300 hover:bg-zinc-900 hover:text-white border-l-2 border-transparent"
+                }`}
+            >
+              {pkg}
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

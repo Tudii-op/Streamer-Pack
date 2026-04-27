@@ -1,12 +1,9 @@
 //! Plugin manager for package operations.
-//! Handles listing, fetching, and installing packages from remote servers.
 
 use serde::{Deserialize, Serialize};
 use std::fs::{self, File};
 use std::io::copy;
-use std::path::{Path, PathBuf};
-
-/// Package information from the remote server.
+use std::path::PathBuf;
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Package {
@@ -16,13 +13,15 @@ pub struct Package {
     pub download_url: String,
 }
 
-/// Installed package information.
-#[derive(Serialize)]
-pub struct InstalledPackage {
-    pub name: String,
+/// Returns the base plugins directory in AppData.
+/// e.g. C:\Users\<user>\AppData\Roaming\streamer-pack\plugins
+fn plugins_dir() -> Result<PathBuf, String> {
+    Ok(dirs::data_dir()
+        .ok_or("Can't find AppData")?
+        .join("streamer-pack")
+        .join("plugins"))
 }
 
-/// Extracts the package name from a download URL.
 fn extract_name_from_url(url: &str) -> String {
     url.split('/')
         .last()
@@ -30,102 +29,155 @@ fn extract_name_from_url(url: &str) -> String {
         .replace(".zip", "")
 }
 
-/// Fetches available packages from the remote API.
 #[tauri::command]
 pub async fn get_packages() -> Result<Vec<Package>, String> {
     let base_url = std::env::var("API_URL")
-    .unwrap_or("http://127.0.0.1:3000".to_string());
-    let url: String = format!("{}/api/packages", base_url);
-    let resp: reqwest::Response = reqwest::get(url)
+        .unwrap_or("http://127.0.0.1:3000".to_string());
+    let url = format!("{}/api/packages", base_url);
+    let resp = reqwest::get(url)
         .await
-        .map_err(|e: reqwest::Error | format!("Failed to fetch packages: {}", e))?;
-
+        .map_err(|e| format!("Failed to fetch packages: {}", e))?;
     let packages: Vec<Package> = resp.json()
         .await
-        .map_err(|e| format!("Failed to parse package response: {}", e))?;
-
+        .map_err(|e| format!("Failed to parse packages: {}", e))?;
     Ok(packages)
 }
 
-/// Lists all installed packages in the ./installed directory.
-#[tauri::command]
-pub fn list_installed_packages() -> Result<Vec<InstalledPackage>, String> {
-    let path = Path::new("./installed");
-
-    if !path.exists() {
-        return Ok(vec![]);
-    }
-
-    let packages = fs::read_dir(path)
-        .map_err(|e| format!("Failed to read installed directory: {}", e))?
-        .filter_map(|e| e.ok())
-        .filter_map(|e| e.file_name().into_string().ok())
-        .map(|name| InstalledPackage { name })
-        .collect();
-
-    Ok(packages)
-}
-
-/// Downloads and installs a package from the given URL.
+/// Downloads a zip from `url`, extracts it into AppData/streamer-pack/plugins/<name>/
 #[tauri::command]
 pub fn install_package(url: String) -> Result<String, String> {
-    let base_dir = Path::new("./installed");
     let package_name = extract_name_from_url(&url);
-    let zip_path = base_dir.join(format!("{package_name}.zip"));
+    let base_dir = plugins_dir()?;
+    let zip_path = base_dir.join(format!("{}.zip", package_name));
     let install_dir = base_dir.join(&package_name);
 
-    fs::create_dir_all(base_dir)
-        .map_err(|e| format!("Failed to create install directory: {}", e))?;
+    fs::create_dir_all(&base_dir)
+        .map_err(|e| format!("Failed to create plugins dir: {}", e))?;
 
+    // Download zip
     let mut resp = reqwest::blocking::get(&url)
-        .map_err(|e| format!("Failed to download package: {}", e))?;
+        .map_err(|e| format!("Failed to download: {}", e))?;
     let mut out = File::create(&zip_path)
         .map_err(|e| format!("Failed to create zip file: {}", e))?;
     copy(&mut resp, &mut out)
-        .map_err(|e| format!("Failed to write zip file: {}", e))?;
+        .map_err(|e| format!("Failed to write zip: {}", e))?;
+
+    // Extract zip
+    fs::create_dir_all(&install_dir)
+        .map_err(|e| format!("Failed to create package dir: {}", e))?;
 
     let zip_file = File::open(&zip_path)
-        .map_err(|e| format!("Failed to open zip file: {}", e))?;
+        .map_err(|e| format!("Failed to open zip: {}", e))?;
     let mut archive = zip::ZipArchive::new(zip_file)
-        .map_err(|e| format!("Failed to read zip archive: {}", e))?;
-
-    fs::create_dir_all(&install_dir)
-        .map_err(|e| format!("Failed to create package directory: {}", e))?;
+        .map_err(|e| format!("Failed to read zip: {}", e))?;
 
     for i in 0..archive.len() {
         let mut file = archive.by_index(i)
-            .map_err(|e| format!("Failed to read zip entry {}: {}", i, e))?;
-        let outpath: PathBuf = install_dir.join(file.mangled_name());
+            .map_err(|e| format!("Failed to read entry {}: {}", i, e))?;
+        let outpath = install_dir.join(file.mangled_name());
 
         if file.name().ends_with('/') {
             fs::create_dir_all(&outpath)
-                .map_err(|e| format!("Failed to create directory: {}", e))?;
+                .map_err(|e| format!("Failed to create dir: {}", e))?;
         } else {
             if let Some(parent) = outpath.parent() {
                 fs::create_dir_all(parent)
-                    .map_err(|e| format!("Failed to create parent directory: {}", e))?;
+                    .map_err(|e| format!("Failed to create parent: {}", e))?;
             }
             let mut outfile = File::create(&outpath)
-                .map_err(|e| format!("Failed to create file: {}", e))?;
+                .map_err(|e| format!("Failed to write file: {}", e))?;
             copy(&mut file, &mut outfile)
-                .map_err(|e| format!("Failed to write extracted file: {}", e))?;
+                .map_err(|e| format!("Failed to extract file: {}", e))?;
         }
     }
 
-    let _ = fs::remove_file(zip_path);
+    let _ = fs::remove_file(&zip_path);
 
     Ok(format!("Installed {}", package_name))
 }
 
-
 #[tauri::command]
 pub fn uninstall_package(name: String) -> Result<String, String> {
-    let path = Path::new("./installed").join(name);
+    let path = plugins_dir()?.join(&name);
     if path.exists() {
         fs::remove_dir_all(&path)
-            .map_err(|e| format!("Failed to uninstall package: {}", e))?;
-        Ok("Package uninstalled".to_string())
+            .map_err(|e| format!("Failed to uninstall: {}", e))?;
+        Ok(format!("Uninstalled {}", name))
     } else {
         Err("Package not found".to_string())
     }
+}
+
+/// Returns the contents of the package's index.mjs for dynamic JS loading.
+#[tauri::command]
+pub fn load_plugin(plugin_name: String) -> Result<String, String> {
+    let path = plugins_dir()?
+        .join(&plugin_name)
+        .join("index.mjs");
+
+    std::fs::read_to_string(&path)
+        .map_err(|e| format!("Failed to read index.mjs: {}", e))
+}
+
+#[tauri::command]
+pub fn call_dll(plugin_name: String, function: String, args: String) -> Result<String, String> {
+    let dll_path = plugins_dir()?
+        .join(&plugin_name)
+        .join("plugin.dll");
+
+    if !dll_path.exists() {
+        return Err(format!("No plugin.dll found for {}", plugin_name));
+    }
+
+    let input = std::ffi::CString::new(args)
+        .map_err(|e| format!("Invalid args string: {}", e))?;
+
+    let fn_name = std::ffi::CString::new(function)
+        .map_err(|e| format!("Invalid function name: {}", e))?;
+
+    unsafe {
+        let lib = libloading::Library::new(&dll_path)
+            .map_err(|e| format!("Failed to load dll: {}", e))?;
+
+        let func: libloading::Symbol<
+            unsafe extern "C" fn(
+                *const std::os::raw::c_char,
+                *const std::os::raw::c_char,
+            ) -> *const std::os::raw::c_char,
+        > = lib.get(b"call\0")
+            .map_err(|e| format!("Failed to find 'call' export: {}", e))?;
+
+        let result_ptr = func(fn_name.as_ptr(), input.as_ptr());
+
+        if result_ptr.is_null() {
+            return Err("DLL returned null".to_string());
+        }
+
+        Ok(std::ffi::CStr::from_ptr(result_ptr)
+            .to_string_lossy()
+            .into_owned())
+    }
+}
+
+#[tauri::command]
+pub fn list_installed_packages() -> Result<Vec<String>, String> {
+    let dir = plugins_dir()?;
+
+    if !dir.exists() {
+        return Ok(vec![]);
+    }
+
+    let packages = std::fs::read_dir(dir)
+        .map_err(|e| e.to_string())?
+        .filter_map(|entry| {
+            let entry = entry.ok()?;
+            if entry.file_type().ok()?.is_dir() {
+                entry.file_name().into_string().ok()
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    Ok(packages)
 }

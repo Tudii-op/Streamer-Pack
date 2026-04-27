@@ -1,1 +1,8 @@
-export type TabType = 'captures' | 'media' | 'stream' | string
+export type TabType = {
+  id: string;
+  title: string;
+};
+export type OpenedTab = {
+  id: string;
+  plugin: string | null;
+};

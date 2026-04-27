@@ -1,7 +1,3 @@
-//! Main entry point for the Streamer Pack Tauri application.
-
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-
 mod plugin_manager;
 
 use plugin_manager::{
@@ -9,6 +5,8 @@ use plugin_manager::{
     install_package,
     list_installed_packages,
     uninstall_package,
+    load_plugin,
+    load_dll,  // 👈 add this
 };
 
 fn main() {
@@ -17,7 +15,9 @@ fn main() {
             get_packages,
             install_package,
             list_installed_packages,
-            uninstall_package
+            uninstall_package,
+            load_plugin,
+            load_dll,  // 👈 and this
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri app");
