@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
-import { listInstalledPackages, loadPlugin } from "./hooks/moduleLoader";
+import { listInstalledPackages, loadPlugin } from "./core/moduleLoader";
 
 import SideBar from "./component/layout/SideBar";
 import Window from "./component/body/Window";
 import DebugPanel from "./component/debug/debugPanel";
-import { addLog } from "./component/debug/debugLogger";
+import { addLog, subscribeLogs } from "./component/debug/debugLogger";
 
 export default function App() {
   const [Plugin, setPlugin] = useState<React.ComponentType | null>(null);
   const [loading, setLoading] = useState(false);
   const [packages, setPackages] = useState<string[]>([]);
+  const [logs, setLogs] = useState<string[]>([]);
   const [activePlugin, setActivePlugin] = useState<string | null>(null);
+  const [browsing, setBrowsing] = useState(false);
 
   useEffect(() => {
     const fetchPackages = async () => {
@@ -18,6 +20,11 @@ export default function App() {
       setPackages(pkgs);
     };
     fetchPackages();
+  }, []);
+
+  useEffect(() => {
+    const unsub = subscribeLogs((newLogs) => setLogs([...newLogs]));
+    return () => unsub();
   }, []);
 
   const fetchPlugin = async (pkg: string) => {
@@ -54,7 +61,7 @@ export default function App() {
     
     {/* Sidebar — 20% width, full height */}
     <div className="w-[20%] h-full border-r border-zinc-900">
-      <SideBar fetchPlugin={fetchPlugin} packages={packages} activePlugin={activePlugin} />
+      <SideBar fetchPlugin={fetchPlugin} packages={packages} activePlugin={activePlugin} setBrowsing={setBrowsing} />
     </div>
 
     {/* Right side — 80% width, split into window + debug */}
@@ -62,12 +69,12 @@ export default function App() {
       
       {/* Window — 70% height */}
       <div className="h-[70%] overflow-auto">
-        <Window Plugin={Plugin} loading={loading} />
+        <Window Plugin={Plugin} loading={loading} browsing={browsing} />
       </div>
 
       {/* Debug panel — 30% height */}
       <div className="h-[30%] border-t border-zinc-900 overflow-auto">
-        <DebugPanel logs={[]} />
+        <DebugPanel logs={logs} />
       </div>
 
     </div>

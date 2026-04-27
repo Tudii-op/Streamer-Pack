@@ -6,7 +6,9 @@ let listeners: LogListener[] = [];
 export function addLog(msg: string) {
   const timestamp = new Date().toLocaleTimeString();
   logs.push(`[${timestamp}] ${msg}`);
-  listeners.forEach((fn) => fn(logs));
+  if (listeners.length > 0) {
+    listeners.forEach((fn) => fn(logs));
+  }
 }
 
 export function getLogs(): string[] {

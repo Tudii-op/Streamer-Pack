@@ -6,7 +6,7 @@ use plugin_manager::{
     list_installed_packages,
     uninstall_package,
     load_plugin,
-    load_dll,  // 👈 add this
+    call_dll,  // 👈 add this
 };
 
 fn main() {
@@ -17,7 +17,7 @@ fn main() {
             list_installed_packages,
             uninstall_package,
             load_plugin,
-            load_dll,  // 👈 and this
+            call_dll,  // 👈 and this
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri app");
