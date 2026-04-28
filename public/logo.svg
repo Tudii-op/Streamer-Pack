@@ -1,0 +1,33 @@
+<svg viewBox="0 0 200 200" width="150" height="150" xmlns="http://www.w3.org/2000/svg">
+
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+
+  <circle cx="100" cy="100" r="40" fill="none" stroke="#a78bfa" stroke-width="5" opacity="0.8" filter="url(#glow)"/>
+<g transform="rotate(60 100 100)" filter="url(#glow)">
+  <line x1="100" y1="100" x2="100" y2="45" stroke="#06b6d4" stroke-width="8" stroke-linecap="round"/>
+  <path d="M 78 45 Q 100 35 122 45" fill="none" stroke="#06b6d4" stroke-width="6" stroke-linecap="round"/>
+</g>
+
+<g transform="rotate(180 100 100)" filter="url(#glow)">
+  <line x1="100" y1="100" x2="100" y2="45" stroke="#4000ffb3" stroke-width="8" stroke-linecap="round"/>
+  <path d="M 78 45 Q 100 35 122 45" fill="none" stroke="#4000ffb3" stroke-width="6" stroke-linecap="round"/>
+</g>
+
+<g transform="rotate(300 100 100)" filter="url(#glow)">
+  <line x1="100" y1="100" x2="100" y2="45" stroke="#f472b6" stroke-width="8" stroke-linecap="round"/>
+  <path d="M 78 45 Q 100 35 122 45" fill="none" stroke="#f472b6" stroke-width="6" stroke-linecap="round"/>
+</g>
+
+  <circle cx="100" cy="100" r="18" fill="#0d0d1a" stroke="#a78bfa" stroke-width="4" filter="url(#glow)"/>
+  <circle cx="100" cy="100" r="7" fill="#9900ff" opacity="0.85" filter="url(#glow)"/>
+
+</svg>

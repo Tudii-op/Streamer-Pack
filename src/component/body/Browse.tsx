@@ -33,6 +33,12 @@ async function handleRefresh() {
     Refresh
   </button>
 </div>
+    {installing && (
+      <div className="flex items-center gap-2 text-sm text-cyan-300">
+        <span>Installing {installing}...</span>
+        <img src="/loading.svg" alt="Loading" className="w-4 h-4" />
+      </div>
+    )}
       <div className="flex flex-col gap-3">
         {packages.map((pkg) => (
           <div key={pkg.id} className="flex items-center justify-between px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700">
@@ -40,9 +46,13 @@ async function handleRefresh() {
               <span className="text-white font-medium">{pkg.name}</span>
               {pkg.description && <span className="text-xs text-zinc-400">{pkg.description}</span>}
             </div>
-            <button onClick={() => handleInstall(pkg.downloadUrl)}>
-              Install
-            </button>
+            {installed.includes(pkg.id) ? (
+              <span className="text-green-500 text-sm font-semibold">Installed</span>
+            ) : (
+              <button onClick={() => handleInstall(pkg.downloadUrl)} className="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all border border-cyan-500 text-cyan-300 hover:bg-zinc-900 active:scale-95">
+                Install
+              </button>
+            )}
           </div>
         ))}      
       </div>
