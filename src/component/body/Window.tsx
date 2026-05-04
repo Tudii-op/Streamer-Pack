@@ -13,7 +13,7 @@ export default function Window({
           <span className="text-xs text-zinc-500 tracking-widest animate-pulse uppercase">
             Loading plugin...
 
-            <img src="/loading.svg" alt="Loading" className="inline-block w-4 h-4 ml-2" />
+            <img src="/logo.svg" alt="Loading" className="inline-block w-4 h-4 ml-2" />
           </span>
         </div>
       ) : Plugin ? (

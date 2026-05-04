@@ -18,8 +18,7 @@ export default function App() {
   useEffect(() => {
     addLog("App: Initializing - listing installed packages");
     listInstalledPackages().then(setPackages);
-    openBrowserTab();
-  }, [openBrowserTab]);
+  }, []);
 
   useEffect(() => {
     addLog("App: Subscribing to log stream");
@@ -80,7 +79,7 @@ export default function App() {
             fetchPlugin={fetchPlugin}
             packages={packages}
             activePlugin={isBrowserTab ? null : activeId}
-            setBrowsing={() => openBrowserTab()}
+            setBrowsing={openBrowserTab}
           />
           <div className="flex flex-col flex-1 overflow-hidden">
             <TabBar
@@ -92,10 +91,6 @@ export default function App() {
               }}
               onClose={(id) => {
                 addLog(`App: Closing tab '${id}'`);
-                if (id === BROWSER_TAB_ID) {
-                  addLog(`App: Cannot close browser tab`);
-                  return;
-                }
                 closeTab(id);
               }}
             />
@@ -117,3 +112,4 @@ export default function App() {
     </div>
   );
 }
+
