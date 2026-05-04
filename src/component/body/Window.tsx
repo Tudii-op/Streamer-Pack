@@ -1,16 +1,10 @@
-import Browse from "./Browse";
 export default function Window({ 
   Plugin, 
   loading,
-  browsing = false,
 }: { 
   Plugin: React.ComponentType | null, 
   loading: boolean,
-  browsing: boolean
 }) {
-  if (browsing) {
-    return <Browse />;
-  }
 
   return (
     <div className="flex-1 bg-[#0a0a0a] overflow-auto p-6">

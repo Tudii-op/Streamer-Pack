@@ -2,23 +2,40 @@ import { useState, useCallback } from 'react'
 import { TabType } from '../types/tabtypes'
 import { addLog } from '../component/debug/debugLogger'
 
+const BROWSER_TAB_ID = '__browser__'
+
 export function useTabs() {
   const [tabs, setTabs] = useState<TabType[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
 
-  // Open or focus a tab. Plugin starts null (loading), gets set later via setTabPlugin
+  // Open or focus a plugin tab
   const openTab = useCallback((pkg: string) => {
-    addLog(`useTab: Opening tab '${pkg}'`);
+    addLog(`useTab: Opening plugin tab '${pkg}'`);
     setTabs(prev => {
       if (prev.find(t => t.id === pkg)) {
         addLog(`useTab: Tab '${pkg}' already exists, not re-creating`);
         return prev
       }
-      addLog(`useTab: Creating new tab '${pkg}'`);
-      return [...prev, { id: pkg, title: pkg, Plugin: null }]
+      addLog(`useTab: Creating new plugin tab '${pkg}'`);
+      return [...prev, { id: pkg, title: pkg, type: 'plugin', Plugin: null }]
     })
     addLog(`useTab: Activating tab '${pkg}'`);
     setActiveId(pkg)
+  }, [])
+
+  // Open a browser tab
+  const openBrowserTab = useCallback(() => {
+    addLog(`useTab: Opening browser tab`);
+    setTabs(prev => {
+      if (prev.find(t => t.id === BROWSER_TAB_ID)) {
+        addLog(`useTab: Browser tab already exists`);
+        return prev
+      }
+      addLog(`useTab: Creating browser tab`);
+      return [...prev, { id: BROWSER_TAB_ID, title: 'Browse', type: 'browser', Plugin: null }]
+    })
+    addLog(`useTab: Activating browser tab`);
+    setActiveId(BROWSER_TAB_ID)
   }, [])
 
   // Called once the plugin finishes loading — caches the component in the tab
@@ -48,5 +65,5 @@ export function useTabs() {
 
   const activeTab = tabs.find(t => t.id === activeId) ?? null
 
-  return { tabs, activeId, activeTab, openTab, closeTab, selectTab, setTabPlugin }
+  return { tabs, activeId, activeTab, openTab, openBrowserTab, closeTab, selectTab, setTabPlugin, BROWSER_TAB_ID }
 }

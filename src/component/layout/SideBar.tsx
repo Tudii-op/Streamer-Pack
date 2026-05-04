@@ -1,10 +1,8 @@
-import { addLog } from "../debug/debugLogger";
-
 type Props = {
   fetchPlugin: (pkg: string) => Promise<void>;
   packages: string[];
   activePlugin: string | null;
-  setBrowsing: React.Dispatch<React.SetStateAction<boolean>>;
+  setBrowsing: () => void;
 };
 
 export default function SideBar({ fetchPlugin, packages, activePlugin, setBrowsing }: Props) {
@@ -16,10 +14,7 @@ export default function SideBar({ fetchPlugin, packages, activePlugin, setBrowsi
         <span className="text-[10px] tracking-widest text-cyan-300 uppercase">Packages</span>
       </div>
       <button 
-        onClick={() => {
-          addLog(`Sidebar: Toggle browse mode`);
-          setBrowsing((prev: boolean) => !prev);
-        }}
+        onClick={setBrowsing}
         className="px-4 py-2.5 text-xs tracking-wide text-cyan-300 hover:bg-zinc-900 hover:text-white border-l-2 border-transparent"
       >
         Browse Packages
@@ -33,9 +28,7 @@ export default function SideBar({ fetchPlugin, packages, activePlugin, setBrowsi
           <li key={pkg}>
             <button
               onClick={() => {
-                  addLog(`Sidebar: Selected package '${pkg}'`);
                   fetchPlugin(pkg);
-                  setBrowsing(false);
               }}
               className={`w-full text-left px-4 py-2.5 text-xs tracking-wide transition-colors
                 ${activePlugin === pkg
