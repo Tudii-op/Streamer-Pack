@@ -1,14 +1,18 @@
 import { invoke } from "@tauri-apps/api/core";
 import * as React from "react";
 import * as ReactJSXRuntime from "react/jsx-runtime";
+import { addLog } from "../component/debug/debugLogger";
 
 export async function loadPlugin(pluginName: string) {
+  addLog(`ModuleLoader: Starting load of plugin '${pluginName}'`);
   const code: string = await invoke("load_plugin", { pluginName });
+  addLog(`ModuleLoader: Received plugin code (${code.length} chars) for '${pluginName}'`);
 
   (window as any).React = React;
   (window as any).__jsx = ReactJSXRuntime;
   (window as any).__tauriCore = { invoke };
 
+  addLog(`ModuleLoader: Patching imports for '${pluginName}'`);
   const patchedCode = code
     .replace(
       /import\s*\{([^}]+)\}\s*from\s*["']react\/jsx-runtime["']/g,
@@ -49,21 +53,26 @@ export async function loadPlugin(pluginName: string) {
       'window.__pluginDefault = $1;'
     );
 
-  console.log("PATCHED CODE:", patchedCode);
+  addLog(`ModuleLoader: Code patched successfully for '${pluginName}'`);
 
   const blob = new Blob([patchedCode], { type: "text/javascript" });
   const url = URL.createObjectURL(blob);
   const script = document.createElement("script");
   script.type = "module";
   script.src = url;
+  addLog(`ModuleLoader: Injecting script for '${pluginName}'`);
   document.head.appendChild(script);
 
   await new Promise((res) => script.onload = res);
   URL.revokeObjectURL(url);
 
-  return { default: (window as any).__pluginDefault };
+  addLog(`ModuleLoader: Script loaded for '${pluginName}', extracting default export`);
+  const result = { default: (window as any).__pluginDefault };
+  addLog(`ModuleLoader: Plugin '${pluginName}' loaded successfully`);
+  return result;
 }
 
 export async function listInstalledPackages() {
+  addLog("ModuleLoader: Listing installed packages");
   return invoke<string[]>("list_installed_packages");
 }

@@ -1,3 +1,5 @@
+import { addLog } from "../debug/debugLogger";
+
 type Props = {
   fetchPlugin: (pkg: string) => Promise<void>;
   packages: string[];
@@ -14,7 +16,10 @@ export default function SideBar({ fetchPlugin, packages, activePlugin, setBrowsi
         <span className="text-[10px] tracking-widest text-cyan-300 uppercase">Packages</span>
       </div>
       <button 
-        onClick={() => setBrowsing((prev: boolean) => !prev)}
+        onClick={() => {
+          addLog(`Sidebar: Toggle browse mode`);
+          setBrowsing((prev: boolean) => !prev);
+        }}
         className="px-4 py-2.5 text-xs tracking-wide text-cyan-300 hover:bg-zinc-900 hover:text-white border-l-2 border-transparent"
       >
         Browse Packages
@@ -27,7 +32,11 @@ export default function SideBar({ fetchPlugin, packages, activePlugin, setBrowsi
         {packages.map((pkg) => (
           <li key={pkg}>
             <button
-              onClick={() => fetchPlugin(pkg)}
+              onClick={() => {
+                  addLog(`Sidebar: Selected package '${pkg}'`);
+                  fetchPlugin(pkg);
+                  setBrowsing(false);
+              }}
               className={`w-full text-left px-4 py-2.5 text-xs tracking-wide transition-colors
                 ${activePlugin === pkg
                   ? "bg-zinc-800 text-white border-l-2 border-blue-500"

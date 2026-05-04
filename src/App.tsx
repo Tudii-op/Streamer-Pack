@@ -1,84 +1,117 @@
 import { useEffect, useState } from "react";
 import { listInstalledPackages, loadPlugin } from "./core/moduleLoader";
-
+import { useTabs } from './hook/useTab';
+import TabBar from './component/tabs/TabBar';
 import SideBar from "./component/layout/SideBar";
 import Window from "./component/body/Window";
 import DebugPanel from "./component/debug/debugPanel";
 import { addLog, subscribeLogs } from "./component/debug/debugLogger";
+import Browse from "./component/body/Browse";
 
 export default function App() {
-  const [Plugin, setPlugin] = useState<React.ComponentType | null>(null);
-  const [loading, setLoading] = useState(false);
   const [packages, setPackages] = useState<string[]>([]);
   const [logs, setLogs] = useState<string[]>([]);
-  const [activePlugin, setActivePlugin] = useState<string | null>(null);
   const [browsing, setBrowsing] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const { tabs, activeId, activeTab, openTab, closeTab, selectTab, setTabPlugin } = useTabs();
 
   useEffect(() => {
-    const fetchPackages = async () => {
-      const pkgs = await listInstalledPackages();
-      setPackages(pkgs);
-    };
-    fetchPackages();
+    addLog("App: Initializing - listing installed packages");
+    listInstalledPackages().then(setPackages);
   }, []);
 
   useEffect(() => {
+    addLog("App: Subscribing to log stream");
     const unsub = subscribeLogs((newLogs) => setLogs([...newLogs]));
-    return () => unsub();
+    return () => {
+      addLog("App: Unsubscribing from log stream");
+      unsub();
+    };
   }, []);
 
   const fetchPlugin = async (pkg: string) => {
+    addLog(`App: Fetching plugin '${pkg}'`);
+    const existing = tabs.find(t => t.id === pkg);
+    if (existing?.Plugin) {
+      addLog(`App: Plugin '${pkg}' already loaded, opening tab`);
+      openTab(pkg);
+      setBrowsing(false);
+      return;
+    }
+
+    addLog(`App: Opening new tab for '${pkg}'`);
+    openTab(pkg);
+    setLoading(true);
+    setBrowsing(false);
     try {
-      setLoading(true);
-      setActivePlugin(pkg);
+      addLog(`App: Loading plugin '${pkg}' from core`);
       const plugin = await loadPlugin(pkg);
-      setPlugin(() => plugin.default);
+      addLog(`App: Plugin '${pkg}' loaded successfully`);
+      setTabPlugin(pkg, plugin.default);
     } catch (err) {
-      addLog(String(err));
-      setActivePlugin(null);
+      addLog(`App: Failed to load plugin '${pkg}': ${String(err)}`);
+      closeTab(pkg);
     } finally {
+      addLog(`App: Plugin load complete for '${pkg}'`);
       setLoading(false);
     }
   };
 
   return (
-<div className="flex flex-col h-screen bg-[#0a0a0a] text-zinc-200 font-mono overflow-hidden text-cyan-300">
-  
-  {/* Top bar */}
-  <div className="flex items-center gap-3 px-5 py-3 border-b border-zinc-900 bg-[#0d0d0d] shrink-0">
-    <span className="ml-3 text-[11px] tracking-widest text-cyan-300 uppercase">
-      MODULAR // {activePlugin ?? "no plugin active"}
-    </span>
-    {loading && (
-      <span className="ml-auto text-[10px] text-cyan-300 tracking-widest animate-pulse">
-        ● LOADING
-      </span>
-    )}
-  </div>
+    <div className="flex flex-col h-screen bg-[#0a0a0a] text-zinc-200 font-mono overflow-hidden">
 
-  {/* Main layout */}
-  <div className="flex flex-1 overflow-hidden">
-    
-    {/* Sidebar — 20% width, full height */}
-    <div className="w-[20%] h-full border-r border-zinc-900">
-      <SideBar fetchPlugin={fetchPlugin} packages={packages} activePlugin={activePlugin} setBrowsing={setBrowsing} />
-    </div>
-
-    {/* Right side — 80% width, split into window + debug */}
-    <div className="w-[80%] flex flex-col">
-      
-      {/* Window — 70% height */}
-      <div className="h-[70%] overflow-auto">
-        <Window Plugin={Plugin} loading={loading} browsing={browsing} />
+      {/* Top bar */}
+      <div className="flex items-center gap-3 px-5 py-3 border-b border-zinc-900 bg-[#0d0d0d] shrink-0">
+        <span className="ml-3 text-[11px] tracking-widest text-cyan-300 uppercase">
+          MODULAR // {browsing ? "browse" : (activeId ?? "no plugin active")}
+        </span>
+        {loading && (
+          <span className="ml-auto text-[10px] text-cyan-300 tracking-widest animate-pulse">
+            ● LOADING
+          </span>
+        )}
       </div>
 
-      {/* Debug panel — 30% height */}
-      <div className="h-[30%] border-t border-zinc-900 overflow-auto">
+      {/* Main layout */}
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <div className="flex flex-1 overflow-hidden">
+          <SideBar
+            fetchPlugin={fetchPlugin}
+            packages={packages}
+            activePlugin={browsing ? null : activeId}
+            setBrowsing={setBrowsing}
+          />
+          <div className="flex flex-col flex-1 overflow-hidden">
+            <TabBar
+              tabs={tabs}
+              activeId={activeId}
+              onSelect={(id) => { 
+                addLog(`App: Selecting tab '${id}'`);
+                selectTab(id); 
+                setBrowsing(false); 
+              }}
+              onClose={(id) => {
+                addLog(`App: Closing tab '${id}'`);
+                closeTab(id);
+              }}
+            />
+            <div className="flex-1 overflow-hidden">
+              {browsing ? (
+                <Browse />
+              ) : (
+                <Window
+                  Plugin={activeTab?.Plugin ?? null}
+                  loading={loading && !!activeId && !activeTab?.Plugin}
+                  browsing={browsing}
+                />
+              )}
+            </div>
+          </div>
+        </div>
         <DebugPanel logs={logs} />
       </div>
 
     </div>
-  </div>
-</div>
   );
 }
