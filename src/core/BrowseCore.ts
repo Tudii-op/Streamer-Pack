@@ -21,7 +21,7 @@ export async function fetchPackages(): Promise<Package[]> {
 
 export async function InstallPackage(downloadUrl: string) {
   addLog(`Installing package: ${downloadUrl}`);
-  const fullUrl = `http://localhost:3000${downloadUrl}`;
+  const fullUrl = API_BASE_URL + downloadUrl;
   
   return invoke("install_package", { url: fullUrl })
     .then((result) => {
