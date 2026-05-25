@@ -12,7 +12,9 @@ pub struct Package {
     pub description: String,
     pub download_url: String,
 }
-
+pub const WEB_API_URL_DEV: &str = "https://web-app-sigma-six.vercel.app";
+pub const API_URL: &str = "https://web-app-sigma-six.vercel.app";
+pub const WEB_API_URL_PROD: &str = "https://web-app-sigma-six.vercel.app";
 /// Returns the base plugins directory in AppData.
 /// e.g. C:\Users\<user>\AppData\Roaming\streamer-pack\plugins
 fn plugins_dir() -> Result<PathBuf, String> {
@@ -31,8 +33,7 @@ fn extract_name_from_url(url: &str) -> String {
 
 #[tauri::command]
 pub async fn get_packages() -> Result<Vec<Package>, String> {
-    let base_url = std::env::var("API_URL")
-        .unwrap_or("http://127.0.0.1:3000".to_string());
+    let base_url = API_URL;
     let url = format!("{}/api/packages", base_url);
     let resp = reqwest::get(url)
         .await

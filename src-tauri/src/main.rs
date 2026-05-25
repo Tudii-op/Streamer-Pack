@@ -8,10 +8,12 @@ use plugin_manager::{
     list_installed_packages,
     uninstall_package,
     load_plugin,
-    call_dll,  // 👈 add this
+    call_dll,
 };
 
 fn main() {
+    dotenvy::dotenv().ok();
+
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             get_packages,
@@ -19,7 +21,7 @@ fn main() {
             list_installed_packages,
             uninstall_package,
             load_plugin,
-            call_dll,  // 👈 and this
+            call_dll,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri app");

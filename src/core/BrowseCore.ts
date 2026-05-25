@@ -1,8 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { addLog } from "../component/debug/debugLogger";
 import { Package } from "../types/maintypes";
-const API_BASE_URL = "http://localhost:3000";
-
+const API_BASE_URL = "https://web-app-sigma-six.vercel.app";
 export async function fetchPackages(): Promise<Package[]> {
   addLog("Fetching packages...");
   return fetch(`${API_BASE_URL}/api/packages`)
